@@ -49,14 +49,15 @@ function AdminProducts() {
   });
 
   const save = async () => {
+    if (!editing.name?.trim()) return toast.error("Name is required");
     const payload = {
-      name: editing.name,
-      description: editing.description,
-      brand: editing.brand,
+      name: editing.name.trim(),
+      description: editing.description ?? null,
+      brand: editing.brand ?? null,
       price: Number(editing.price),
       discount_price: editing.discount_price ? Number(editing.discount_price) : null,
       stock: Number(editing.stock),
-      image_url: editing.image_url,
+      image_url: editing.image_url ?? null,
       featured: !!editing.featured,
       category_id: editing.category_id || null,
     };
