@@ -1,9 +1,9 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,11 +11,13 @@ import { formatINR } from "@/lib/types";
 import { toast } from "sonner";
 import { CheckCircle2 } from "lucide-react";
 import { z } from "zod";
+import { placeOrder } from "@/lib/orders.functions";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({ meta: [{ title: "Checkout — ShopSphere" }] }),
   component: CheckoutPage,
 });
+
 
 const addressSchema = z.object({
   full_name: z.string().trim().min(2).max(100),
@@ -30,9 +32,11 @@ function CheckoutPage() {
   const { user } = useAuth();
   const { items, subtotal, shipping, total, clear } = useCart();
   const navigate = useNavigate();
+  const submitOrder = useServerFn(placeOrder);
   const [placed, setPlaced] = useState<{ orderId: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ full_name: "", phone: "", address_line: "", city: "", state: "", pincode: "" });
+
 
   if (!user) return <AppShell><div className="container mx-auto p-10 text-center card-elevated max-w-lg mt-10">
     <h2 className="text-xl font-semibold">Sign in to checkout</h2>
@@ -60,7 +64,7 @@ function CheckoutPage() {
     <Button asChild className="mt-4"><Link to="/products">Shop now</Link></Button>
   </div></AppShell>;
 
-  const placeOrder = async () => {
+  const handlePlaceOrder = async () => {
     const parsed = addressSchema.safeParse(form);
     if (!parsed.success) {
       toast.error(parsed.error.issues[0].message);
@@ -68,38 +72,16 @@ function CheckoutPage() {
     }
     setSubmitting(true);
     try {
-      const estimated = new Date();
-      estimated.setDate(estimated.getDate() + 5);
-
-      const { data: order, error } = await supabase.from("orders").insert({
-        user_id: user.id,
-        total_amount: total,
-        status: "pending",
-        payment_status: "paid",
-        shipping_address: parsed.data,
-        estimated_delivery: estimated.toISOString().slice(0, 10),
-      }).select().single();
-      if (error) throw error;
-
-      const orderItems = items.map((row) => ({
-        order_id: order.id,
-        product_id: row.product.id,
-        product_name: row.product.name,
-        product_image: row.product.image_url,
-        quantity: row.quantity,
-        price: row.product.discount_price ?? row.product.price,
-      }));
-      const { error: itemsErr } = await supabase.from("order_items").insert(orderItems);
-      if (itemsErr) throw itemsErr;
-
+      const result = await submitOrder({ data: { shipping_address: parsed.data } });
       await clear.mutateAsync();
-      setPlaced({ orderId: order.id });
+      setPlaced({ orderId: result.orderId });
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
       setSubmitting(false);
     }
   };
+
 
   return (
     <AppShell>
@@ -140,7 +122,7 @@ function CheckoutPage() {
               <div className="flex justify-between"><span>Shipping</span><span>{shipping === 0 ? "FREE" : formatINR(shipping)}</span></div>
               <div className="border-t pt-2 flex justify-between font-bold text-base"><span>Total</span><span>{formatINR(total)}</span></div>
             </div>
-            <Button disabled={submitting} onClick={placeOrder} size="lg"
+            <Button disabled={submitting} onClick={handlePlaceOrder} size="lg"
               className="w-full mt-4 bg-accent text-accent-foreground hover:opacity-90 font-semibold">
               {submitting ? "Placing..." : "Place Order"}
             </Button>
