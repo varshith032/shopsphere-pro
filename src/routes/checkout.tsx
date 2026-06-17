@@ -1,9 +1,9 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,11 +11,13 @@ import { formatINR } from "@/lib/types";
 import { toast } from "sonner";
 import { CheckCircle2 } from "lucide-react";
 import { z } from "zod";
+import { placeOrder } from "@/lib/orders.functions";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({ meta: [{ title: "Checkout — ShopSphere" }] }),
   component: CheckoutPage,
 });
+
 
 const addressSchema = z.object({
   full_name: z.string().trim().min(2).max(100),
