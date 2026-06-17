@@ -57,11 +57,6 @@ function AuthPage() {
     else { toast.success("Account created!"); navigate({ to: "/" }); }
   };
 
-  const useDemo = (kind: "admin" | "user") => {
-    if (kind === "admin") setLogin({ email: "admin@shopsphere.com", password: "Admin123" });
-    else setLogin({ email: "user@shopsphere.com", password: "User123" });
-    setTab("login");
-  };
 
   return (
     <AppShell>
