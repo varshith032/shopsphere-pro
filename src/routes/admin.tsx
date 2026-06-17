@@ -1,7 +1,10 @@
 import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/AppShell";
 import { useAuth } from "@/hooks/useAuth";
+import { verifyAdmin } from "@/lib/orders.functions";
 import { LayoutDashboard, Package, ShoppingCart, Tags, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -10,16 +13,28 @@ export const Route = createFileRoute("/admin")({
 });
 
 function AdminLayout() {
-  const { user, role, loading } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const verify = useServerFn(verifyAdmin);
+
+  const { data, isLoading: checking, isError } = useQuery({
+    queryKey: ["admin-verify", user?.id],
+    queryFn: () => verify(),
+    enabled: !!user,
+    staleTime: 60_000,
+  });
+
+  const serverIsAdmin = data?.isAdmin === true;
 
   useEffect(() => {
-    if (!loading && (!user || role !== "admin")) navigate({ to: "/" });
-  }, [user, role, loading, navigate]);
+    if (loading || checking) return;
+    if (!user || isError || !serverIsAdmin) navigate({ to: "/" });
+  }, [user, loading, checking, serverIsAdmin, isError, navigate]);
 
-  if (loading || !user || role !== "admin") {
+  if (loading || checking || !user || !serverIsAdmin) {
     return <AppShell><div className="container mx-auto p-10 text-center">Checking access…</div></AppShell>;
   }
+
 
   const links = [
     { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
