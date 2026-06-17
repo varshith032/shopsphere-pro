@@ -69,21 +69,13 @@ function AuthPage() {
         <div className="hidden md:block bg-primary text-primary-foreground rounded-lg p-8">
           <h2 className="text-3xl font-bold">Welcome to ShopSphere</h2>
           <p className="mt-2 opacity-90">Sign in to access your orders, wishlist, recommendations, and more.</p>
-
-          <div className="mt-8 space-y-3">
-            <div className="bg-white/10 rounded p-3 text-sm">
-              <div className="font-semibold">Demo Admin</div>
-              <div className="opacity-90 mt-1">admin@shopsphere.com / Admin123</div>
-              <Button size="sm" variant="secondary" className="mt-2" onClick={() => useDemo("admin")}>Use Admin Credentials</Button>
-            </div>
-            <div className="bg-white/10 rounded p-3 text-sm">
-              <div className="font-semibold">Demo Customer</div>
-              <div className="opacity-90 mt-1">user@shopsphere.com / User123</div>
-              <Button size="sm" variant="secondary" className="mt-2" onClick={() => useDemo("user")}>Use Customer Credentials</Button>
-            </div>
-            <p className="text-xs opacity-80">Note: Create the demo accounts via Sign Up on first use — they will be auto-promoted.</p>
-          </div>
+          <ul className="mt-6 space-y-2 text-sm opacity-90 list-disc list-inside">
+            <li>Track orders and manage addresses</li>
+            <li>Save favourites to your wishlist</li>
+            <li>Faster checkout on every visit</li>
+          </ul>
         </div>
+
 
         <div className="card-elevated p-6">
           <Tabs value={tab} onValueChange={setTab}>
