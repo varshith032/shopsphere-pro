@@ -122,7 +122,7 @@ function CheckoutPage() {
               <div className="flex justify-between"><span>Shipping</span><span>{shipping === 0 ? "FREE" : formatINR(shipping)}</span></div>
               <div className="border-t pt-2 flex justify-between font-bold text-base"><span>Total</span><span>{formatINR(total)}</span></div>
             </div>
-            <Button disabled={submitting} onClick={placeOrder} size="lg"
+            <Button disabled={submitting} onClick={handlePlaceOrder} size="lg"
               className="w-full mt-4 bg-accent text-accent-foreground hover:opacity-90 font-semibold">
               {submitting ? "Placing..." : "Place Order"}
             </Button>
