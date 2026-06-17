@@ -32,9 +32,11 @@ function CheckoutPage() {
   const { user } = useAuth();
   const { items, subtotal, shipping, total, clear } = useCart();
   const navigate = useNavigate();
+  const submitOrder = useServerFn(placeOrder);
   const [placed, setPlaced] = useState<{ orderId: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ full_name: "", phone: "", address_line: "", city: "", state: "", pincode: "" });
+
 
   if (!user) return <AppShell><div className="container mx-auto p-10 text-center card-elevated max-w-lg mt-10">
     <h2 className="text-xl font-semibold">Sign in to checkout</h2>
@@ -62,7 +64,7 @@ function CheckoutPage() {
     <Button asChild className="mt-4"><Link to="/products">Shop now</Link></Button>
   </div></AppShell>;
 
-  const placeOrder = async () => {
+  const handlePlaceOrder = async () => {
     const parsed = addressSchema.safeParse(form);
     if (!parsed.success) {
       toast.error(parsed.error.issues[0].message);
@@ -70,38 +72,16 @@ function CheckoutPage() {
     }
     setSubmitting(true);
     try {
-      const estimated = new Date();
-      estimated.setDate(estimated.getDate() + 5);
-
-      const { data: order, error } = await supabase.from("orders").insert({
-        user_id: user.id,
-        total_amount: total,
-        status: "pending",
-        payment_status: "paid",
-        shipping_address: parsed.data,
-        estimated_delivery: estimated.toISOString().slice(0, 10),
-      }).select().single();
-      if (error) throw error;
-
-      const orderItems = items.map((row) => ({
-        order_id: order.id,
-        product_id: row.product.id,
-        product_name: row.product.name,
-        product_image: row.product.image_url,
-        quantity: row.quantity,
-        price: row.product.discount_price ?? row.product.price,
-      }));
-      const { error: itemsErr } = await supabase.from("order_items").insert(orderItems);
-      if (itemsErr) throw itemsErr;
-
+      const result = await submitOrder({ data: { shipping_address: parsed.data } });
       await clear.mutateAsync();
-      setPlaced({ orderId: order.id });
+      setPlaced({ orderId: result.orderId });
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
       setSubmitting(false);
     }
   };
+
 
   return (
     <AppShell>
